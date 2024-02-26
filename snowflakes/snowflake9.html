@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Snowflake Animation</title>
+    <script>
+      const snowflakeSvg =
+        "%3Csvg xmlns='http://www.w3.org/2000/svg' style='opacity: 0.5' viewBox='0 0 448 512'%3E%3Cpath d='M438.237 355.927l-66.574-38.54 59.448-10.327c5.846-1.375 10.609-5.183 13.458-10.13 2.48-4.307 3.506-9.478 2.524-14.651-2.11-11.115-12.686-18.039-23.621-15.467l-85.423 31.115L255.914 256l82.136-41.926 85.423 31.115c10.936 2.572 21.512-4.352 23.621-15.467 2.111-11.115-5.046-22.209-15.981-24.781l-59.448-10.327 66.573-38.54c9.54-5.523 12.615-18.092 6.867-28.074-5.748-9.982-18.14-13.596-27.68-8.074l-66.574 38.54 20.805-56.787c3.246-10.782-2.758-22.542-13.413-26.268-10.654-3.725-21.922 1.997-25.168 12.779l-15.838 89.735-72.423 41.926V136l69.585-58.621c7.689-8.21 6.997-20.856-1.548-28.245-8.545-7.391-21.705-6.723-29.394 1.486l-38.644 46.46V20c0-11.046-9.318-20-20.813-20s-20.813 8.954-20.813 20v77.08l-38.644-46.46c-7.689-8.21-20.849-8.876-29.394-1.486-8.544 7.389-9.236 20.035-1.547 28.245L203.187 136v83.853l-72.423-41.926-15.838-89.736c-3.247-10.782-14.515-16.504-25.169-12.779-10.656 3.725-16.659 15.486-13.413 26.268l20.805 56.787-66.573-38.54c-9.54-5.523-21.933-1.908-27.68 8.074s-2.673 22.551 6.867 28.074l66.574 38.54-59.449 10.328C5.953 207.515-1.202 218.609.907 229.724c2.11 11.114 12.686 18.038 23.622 15.466l85.422-31.115L192.086 256l-82.136 41.926-85.423-31.115c-10.936-2.572-21.511 4.352-23.622 15.466-2.109 11.113 5.046 22.209 15.981 24.781l59.449 10.328-66.574 38.54C.223 361.449-2.852 374.018 2.896 384s18.14 13.597 27.68 8.074l66.574-38.54-20.805 56.786c-1.735 5.764-.828 11.805 2.02 16.751 2.48 4.307 6.433 7.784 11.392 9.517 10.655 3.725 21.923-1.997 25.169-12.779l15.838-89.736 72.423-41.926V376l-69.585 58.621c-7.69 8.21-6.997 20.855 1.547 28.245 8.544 7.388 21.705 6.723 29.394-1.487l38.644-46.46V492c0 11.046 9.318 20 20.813 20s20.813-8.954 20.813-20v-77.081l38.644 46.46c4.111 4.389 9.782 6.621 15.478 6.621 4.96 0 9.939-1.694 13.916-5.134 8.545-7.39 9.237-20.035 1.548-28.245L244.813 376v-83.853l72.423 41.926 15.838 89.736c3.246 10.782 14.514 16.504 25.168 12.779 10.653-3.726 16.659-15.487 13.412-26.268l-20.805-56.787 66.574 38.54c9.54 5.523 21.933 1.908 27.68-8.074 5.749-9.981 2.675-22.55-6.866-28.072z'%3E%3C/path%3E%3C/svg%3E";
+      const targetClassName = "with-falling-snowflakes";
+      const style = document.createElement("style");
+      const snowflakeSize = 50;
+      const maxPageOffsetY = 100;
+      const minPageOffsetY = 20;
+
+      const maxImageOffsetX = 30;
+      const minImageOffsetX = 5;
+
+      function getSign() {
+        return Math.random() > 0.5 ? 1 : -1;
+      }
+
+      function getFromRange(min = 0, max = 100) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+      }
+
+      function getFromRangeSigned(min, max) {
+        return getFromRange(min, max) * getSign();
+      }
+
+      function interpolate(
+        value,
+        toStart,
+        toEnd,
+        fromStart = 0,
+        fromEnd = 100
+      ) {
+        const ratio = (value - fromStart) / (fromEnd - fromStart);
+        let result = toStart + ratio * (toEnd - toStart);
+        result = Math.round(result * 100) / 100;
+        return result;
+      }
+
+      function getRandomPositionSequence(stops = 5) {
+        const total = 100;
+        const step = Math.floor(total / (stops - 1));
+        const minOffestY = Math.floor(step / 2);
+        //
+        const offsetY = getFromRange(minPageOffsetY, maxPageOffsetY);
+        const startY = -offsetY;
+        const endY = total * 2 - offsetY;
+        //
+        let signX = getSign();
+        const offsetX = getFromRange(minPageOffsetY, maxPageOffsetY);
+        console.log(
+          "🚀 ~ file: snowflake9.html:53 ~ getRandomPositionSequence ~ offsetX:",
+          offsetX
+        );
+        //
+        const result = Array(stops)
+          .fill(0)
+          // get random Y values with offsets
+          .map((_, i) => {
+            if (i === 0) return 0;
+            if (i === stops - 1) return total;
+            return i * step + getFromRangeSigned(0, minOffestY);
+          })
+          // convert Y values into viewport percents
+          .map((y) => interpolate(y, startY, endY, 0, total))
+          // add random X values with offsets
+          .reduce((acc, y) => {
+            const x =
+              offsetX + signX * getFromRange(minImageOffsetX, maxImageOffsetX);
+            acc.push([x, y]);
+            signX *= -1;
+            return acc;
+          }, []);
+        return result;
+      }
+
+      const test = getRandomPositionSequence();
+      console.log(
+        "🚀 ~ file: snowflake9.html:48 ~ getStopsWithRandomOffsetY():",
+        JSON.stringify(test, null, "\t"),
+        test
+      );
+
+      const x1 = 25;
+      const y1 = 0 - maxPageOffsetY;
+
+      const x2 = 0;
+      const y2 = 25;
+
+      const x3 = 50;
+      const y3 = 75;
+
+      const x4 = 25;
+      const y4 = 100 + maxPageOffsetY;
+
+      const obj = { x1, y1, x2, y2, x3, y3, x4, y4 };
+
+      style.textContent = `.${targetClassName} {
+        --snowflake: url("data:image/svg+xml,${snowflakeSvg}");
+        animation-composition: accumulate;
+        animation: 20s ease-out 0s infinite normal both snowfall
+      }
+
+      @keyframes snowfall {
+        /*--------------------------------------------------------------------\
+                                          1
+        \--------------------------------------------------------------------*/
+        0% {
+          background: var(--snowflake) no-repeat fixed left ${obj.x1}% top ${obj.y1}% / ${snowflakeSize}px;
+        }
+        7% {
+          background: var(--snowflake) no-repeat fixed left ${obj.x2}% top ${obj.y2}% / ${snowflakeSize}px;
+        }
+        20% {
+          background: var(--snowflake) no-repeat fixed left ${obj.x3}% top ${obj.y3}% / ${snowflakeSize}px;
+        }
+        24.98% {
+          background: var(--snowflake) no-repeat fixed left ${obj.x4}% top ${obj.y4}% / ${snowflakeSize}px;
+        }
+        24.99% {
+          background: var(--snowflake) no-repeat fixed left ${obj.x4}% top ${obj.y4}% / 0px;
+        }
+        /*--------------------------------------------------------------------\
+                                          2
+        \--------------------------------------------------------------------*/
+        25% {
+          background: var(--snowflake) no-repeat fixed left ${obj.x1}% top ${obj.y1}% / ${snowflakeSize}px;
+        }
+        32% {
+          background: var(--snowflake) no-repeat fixed left ${obj.x2}% top ${obj.y2}% / ${snowflakeSize}px;
+        }
+        45% {
+          background: var(--snowflake) no-repeat fixed left ${obj.x3}% top ${obj.y3}% / ${snowflakeSize}px;
+        }
+        49.98% {
+          background: var(--snowflake) no-repeat fixed left ${obj.x4}% top ${obj.y4}% / ${snowflakeSize}px;
+        }
+        49.99% {
+          background: var(--snowflake) no-repeat fixed left ${obj.x4}% top ${obj.y4}% / 0px;
+        }
+        /*--------------------------------------------------------------------\
+                                          3
+        \--------------------------------------------------------------------*/
+        50% {
+          background: var(--snowflake) no-repeat fixed left ${obj.x1}% top ${obj.y1}% / ${snowflakeSize}px;
+        }
+        57% {
+          background: var(--snowflake) no-repeat fixed left ${obj.x2}% top ${obj.y2}% / ${snowflakeSize}px;
+        }
+        70% {
+          background: var(--snowflake) no-repeat fixed left ${obj.x3}% top ${obj.y3}% / ${snowflakeSize}px;
+        }
+        74.98% {
+          background: var(--snowflake) no-repeat fixed left ${obj.x4}% top ${obj.y4}% / ${snowflakeSize}px;
+        }
+        74.99% {
+          background: var(--snowflake) no-repeat fixed left ${obj.x4}% top ${obj.y4}% / 0px;
+        }
+        /*--------------------------------------------------------------------\
+                                          4
+        \--------------------------------------------------------------------*/
+        75% {
+          background: var(--snowflake) no-repeat fixed left ${obj.x1}% top ${obj.y1}% / ${snowflakeSize}px;
+        }
+        82% {
+          background: var(--snowflake) no-repeat fixed left ${obj.x2}% top ${obj.y2}% / ${snowflakeSize}px;
+        }
+        95% {
+          background: var(--snowflake) no-repeat fixed left ${obj.x3}% top ${obj.y3}% / ${snowflakeSize}px;
+        }
+        100% {
+          background: var(--snowflake) no-repeat fixed left ${obj.x4}% top ${obj.y4}% / ${snowflakeSize}px;
+        }
+      }
+      `;
+      document.head.appendChild(style);
+    </script>
+  </head>
+  <body class="with-falling-snowflakes">
+    <!-- (article>(p>lorem50)*5)*5 -->
+    <article>
+      <p>
+        Lorem ipsum dolor sit amet consectetur adipisicing elit. Dolores minus
+        omnis eos deserunt cumque consequuntur ratione fugit, est minima maiores
+        soluta delectus reprehenderit placeat veritatis corporis iure eum quasi
+        distinctio sapiente numquam consectetur et. Nobis aliquam eaque esse ut
+        ad, dicta sapiente laborum excepturi temporibus ullam quisquam tenetur
+        in nemo!
+      </p>
+      <p>
+        Ea nesciunt dolores tempore sit, perspiciatis reiciendis est! Animi sed
+        similique rem placeat temporibus eligendi neque maiores, nobis, qui
+        omnis iusto mollitia exercitationem nostrum minus aspernatur enim
+        blanditiis aliquid voluptas deserunt voluptate! Dolorem repudiandae
+        ipsum optio iure cupiditate, veritatis fugit quas a necessitatibus
+        architecto atque quae laboriosam, illum laudantium. Ducimus.
+      </p>
+      <p>
+        Praesentium illo fugiat voluptates explicabo, culpa debitis velit sed
+        adipisci ullam maiores cum cupiditate quidem quas aliquid at, aliquam
+        similique tempora numquam qui. Pariatur, illo cumque eum repudiandae
+        beatae ut vitae obcaecati earum deleniti perferendis inventore doloribus
+        incidunt facilis magni quo nesciunt porro labore corporis, accusantium
+        id. Cumque, accusamus adipisci?
+      </p>
+      <p>
+        Fugiat, officia? Incidunt nihil reprehenderit voluptatem culpa animi
+        facere cum sapiente ipsa error eaque ipsum, minima exercitationem
+        blanditiis nemo adipisci earum possimus modi quas dolore sequi
+        architecto excepturi magni. Eum, minus incidunt reiciendis ullam nulla
+        minima laudantium quisquam obcaecati perferendis sequi optio quis,
+        excepturi alias ipsa corrupti possimus esse dignissimos.
+      </p>
+      <p>
+        Voluptatum aspernatur veniam id, beatae accusamus obcaecati tenetur
+        repellat dolore minus praesentium voluptates ullam repellendus maxime
+        amet quis sint voluptatibus hic ex alias incidunt commodi nisi dolor.
+        Animi, temporibus ipsa id nostrum provident hic illum architecto tempore
+        incidunt placeat, delectus cupiditate cumque quod eveniet similique
+        error nihil ab fuga voluptatem!
+      </p>
+    </article>
+    <article>
+      <p>
+        Lorem ipsum dolor, sit amet consectetur adipisicing elit. A, facilis sed
+        fugit, velit iste odit culpa numquam veritatis atque cum commodi rem
+        sunt praesentium aut cupiditate mollitia facere magni! Rem esse
+        aspernatur perspiciatis vitae sapiente ut mollitia, et ipsa! Tenetur
+        laboriosam repellendus a blanditiis ab harum perspiciatis eligendi quas
+        veritatis!
+      </p>
+      <p>
+        Molestias quidem, veniam voluptatibus non enim provident mollitia
+        corporis hic nihil. Corrupti quod earum ratione est nobis voluptatum
+        asperiores autem tenetur fugiat quisquam iure nostrum cum consequuntur
+        quasi, non inventore architecto voluptatibus numquam aut ipsa. Excepturi
+        autem illo, nam praesentium dolor iusto qui quis expedita omnis aliquam
+        ducimus reiciendis? Unde.
+      </p>
+      <p>
+        Corrupti, cumque doloremque! Deserunt aliquid commodi sint porro rem
+        cupiditate, nostrum facere eum, eligendi est eaque debitis praesentium,
+        nihil vitae! Quia vitae in totam ut repudiandae dicta consectetur
+        voluptas voluptatum repellat, sequi, unde distinctio natus aliquam
+        nesciunt sed corporis excepturi quo iure repellendus molestias esse,
+        maiores harum libero? Nobis, facilis.
+      </p>
+      <p>
+        Saepe atque, quos eos consequuntur cum quidem cupiditate fugiat aperiam,
+        earum quas eligendi vel modi harum repudiandae corporis amet sit commodi
+        nemo velit accusamus illum, repellat unde assumenda dolorem! Omnis sequi
+        laboriosam perspiciatis tenetur sunt adipisci, est consequuntur beatae
+        ab delectus ex laborum aperiam suscipit nulla alias vero officia?
+        Laudantium.
+      </p>
+      <p>
+        Eum veniam minus, rem quisquam, assumenda pariatur obcaecati delectus
+        cupiditate deserunt esse neque magni unde distinctio nemo, maiores
+        voluptates ipsum. Ducimus repudiandae quaerat ex nobis, hic rem magni,
+        corporis voluptates facilis, nulla exercitationem praesentium. Mollitia
+        inventore molestiae assumenda voluptatem aperiam voluptatum animi!
+        Maiores exercitationem itaque nam. Et repellendus eos voluptas.
+      </p>
+    </article>
+    <article>
+      <p>
+        Lorem ipsum dolor sit amet, consectetur adipisicing elit. Tenetur quasi
+        at magni dolorum inventore accusamus! Temporibus nemo in officia ad eos,
+        labore odit quae velit deleniti modi est voluptatem ex consequuntur sed
+        aperiam officiis ipsum? Itaque blanditiis minima, optio, modi maiores
+        tempora vitae nam quae voluptate ullam quam ipsa non.
+      </p>
+      <p>
+        Ea cum error recusandae quibusdam tempore! Atque enim ullam repellendus
+        hic magni pariatur non quo sapiente? Ullam dolor ut fugit illo id.
+        Deleniti rem, velit ducimus voluptas adipisci nisi sit in vel porro
+        voluptatem doloremque consectetur neque veritatis natus quos accusamus
+        vero laboriosam mollitia, perferendis molestiae magni? Voluptatibus,
+        minima quasi!
+      </p>
+      <p>
+        Minus excepturi enim consectetur ad odio eum consequuntur deleniti fuga
+        necessitatibus incidunt! Recusandae eum voluptates debitis natus
+        distinctio neque quidem atque corrupti repellat nihil enim ab, a aliquid
+        quod voluptas pariatur blanditiis nobis et sint? Incidunt maxime odit
+        alias, blanditiis eos recusandae, tenetur quae dolor praesentium at quam
+        earum corrupti?
+      </p>
+      <p>
+        Voluptates ad illo, quaerat tenetur fuga dolorem quia suscipit alias
+        aliquid, quo ullam incidunt, ab omnis hic placeat illum libero aliquam
+        nesciunt fugiat necessitatibus tempore consequatur. Non expedita quaerat
+        itaque a molestiae? Aperiam fugit dolores repellat, recusandae, atque
+        totam quaerat eligendi aspernatur corporis eveniet odit magni
+        consequuntur, reprehenderit et neque!
+      </p>
+      <p>
+        Similique, rem. Facilis repudiandae sunt, reiciendis in ducimus quos
+        deleniti repellendus deserunt voluptatibus inventore sed qui sequi illum
+        modi veniam expedita ipsa similique iste quae illo eum itaque neque
+        magnam. Esse sint dolorem at asperiores fugit vero fugiat quae minus
+        eveniet officiis voluptas et id voluptatum quos voluptatibus, fuga enim?
+      </p>
+    </article>
+    <article>
+      <p>
+        Lorem ipsum, dolor sit amet consectetur adipisicing elit. Sequi nobis,
+        accusantium blanditiis deserunt nihil illum inventore omnis debitis est
+        fuga, aspernatur officia vitae earum! Dignissimos, et? Deleniti omnis
+        sint obcaecati harum repellendus dolore ratione. Eos, at. Aut et dolore
+        alias ipsam eius dolor rerum, delectus excepturi temporibus quis fuga
+        vero.
+      </p>
+      <p>
+        Impedit iure voluptatem aperiam nemo architecto, debitis recusandae
+        laboriosam natus dolor voluptate similique reprehenderit enim eos
+        tenetur assumenda labore dolorem ipsam. Repellat, temporibus, magni eum
+        dolorem quia libero perferendis cupiditate sit et sint quod?
+        Voluptatibus beatae cum commodi incidunt recusandae libero rem et
+        molestias laboriosam dicta. Voluptate hic necessitatibus reiciendis?
+      </p>
+      <p>
+        Repudiandae quis nam provident quisquam consectetur inventore
+        repellendus vel, aliquid hic praesentium minima eius recusandae totam!
+        Porro voluptatum laboriosam, voluptatem suscipit aperiam dicta ea rem,
+        labore assumenda pariatur architecto provident nemo asperiores
+        accusantium eum consequatur cupiditate! Et enim minus non architecto.
+        Illo magnam doloribus incidunt ab nam numquam recusandae odio.
+      </p>
+      <p>
+        Quibusdam beatae, nesciunt quisquam maxime aut libero harum. Libero,
+        recusandae nostrum quibusdam est neque nam quia facere soluta ipsum
+        nesciunt quod, nulla ratione natus! Ratione adipisci quidem provident
+        aut quae quisquam incidunt repellat sint. Incidunt vero rerum animi
+        laudantium veritatis perferendis blanditiis, totam ducimus quam alias
+        voluptas quisquam labore natus.
+      </p>
+      <p>
+        Natus libero nesciunt perferendis commodi placeat? Quia in nobis velit.
+        A illo incidunt ut inventore nemo, voluptatum necessitatibus, iste
+        mollitia earum accusantium autem laboriosam aperiam nesciunt suscipit id
+        nisi cupiditate quae animi excepturi exercitationem voluptates, tempora
+        quis? Consequatur saepe error facilis repudiandae, repellat, temporibus
+        eius quo earum atque expedita aperiam!
+      </p>
+    </article>
+    <article>
+      <p>
+        Lorem ipsum, dolor sit amet consectetur adipisicing elit. Alias quae
+        voluptates natus eos vero, unde voluptatum necessitatibus exercitationem
+        non maxime dignissimos ipsam quasi optio earum ut quis quas minima
+        perferendis recusandae modi ea quibusdam, minus, nihil voluptatem!
+        Asperiores, excepturi, recusandae sint cum alias culpa tenetur iste
+        fugit esse, beatae ducimus!
+      </p>
+      <p>
+        Voluptatibus sunt sint iusto aut aliquam alias. Quo quis blanditiis unde
+        quas aperiam, corporis error labore rerum voluptatum amet obcaecati at
+        explicabo voluptate nisi earum illo adipisci architecto voluptatibus
+        perspiciatis aliquam. Saepe totam repudiandae dicta facilis quasi
+        inventore corporis quaerat numquam nulla vero delectus, cumque culpa
+        soluta praesentium magnam rem?
+      </p>
+      <p>
+        Praesentium eius dolores, adipisci quae dignissimos magni aliquam sed
+        nobis odio reiciendis. Exercitationem iusto natus nemo deserunt
+        molestias distinctio corporis rem iste tempore sapiente sint atque
+        necessitatibus ut labore quidem amet iure, culpa placeat repellat
+        commodi odio eos velit blanditiis saepe. Possimus consequuntur
+        laudantium ratione et, quas labore doloremque dolor.
+      </p>
+      <p>
+        Possimus voluptas ipsum est necessitatibus placeat molestias repellendus
+        natus aperiam. Officia sit eveniet incidunt veniam in ex non natus quasi
+        exercitationem rem, error quam numquam expedita eum. Porro minima culpa
+        cumque eligendi assumenda optio dolorem neque numquam dolores autem hic,
+        repudiandae fugiat rerum pariatur eveniet. Fugit reiciendis magnam rem
+        velit.
+      </p>
+      <p>
+        Nemo optio, vero nam qui possimus doloribus consequatur assumenda minima
+        at rerum ullam beatae! Aspernatur adipisci sit, architecto eaque non aut
+        laborum, voluptates culpa fugit, alias ducimus repudiandae expedita
+        consequatur nam! Neque, veniam repellendus! Similique iste atque aut
+        accusantium odit consequatur, est vel aliquid ad! Corrupti vitae
+        doloremque illo sed.
+      </p>
+    </article>
+  </body>
+</html>
